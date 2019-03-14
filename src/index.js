@@ -4,6 +4,7 @@ const KeycloakToken = require('keycloak-connect/middleware/auth-utils/token')
 const apiKey = require('./apiKey')
 const cache = require('./cache')
 const token = require('./token')
+const publicKey = require('./publicKey')
 const { raiseUnauthorized, errorMessages, fakeToolkit, verify } = require('./utils')
 const pkg = require('../package.json')
 
@@ -33,6 +34,42 @@ async function verifySignedJwt (tkn) {
   await manager.validateToken(kcTkn, 'Bearer')
 
   return tkn
+}
+
+/**
+ * @function
+ * @private
+ * 
+ * Dyanmically switch between realm public keys to verify
+ * the token.
+ * 
+ * @param {string} tkn The token to be validated
+ * @returns {Promise} The error-handled promise
+ */
+async function verifyDynamicRealmSignedJwt(tkn) {
+  try {
+    const kcTkn = new KeycloakToken(tkn, options.clientId);
+    const { multiRealm: { baseUrl }} = options;
+    const { iss } = kcTkn.content;
+    const realm = iss.substring(iss.lastIndexOf('/') + 1, iss.length);
+
+    let key = await cache.get(store, realm);
+    if (!key) {
+      key = await publicKey.getRealmPublicKey(baseUrl, realm);
+      await cache.set(store, realm, key, expiresIn);
+    }
+    const manage = new GrantManager(
+      Object.assign(
+        options,
+        { publicKey: key, realmUrl: `${baseUrl}/auth/realms/${realm}` }
+      )
+    );
+    await manage.validateToken(tkn, 'Bearer');
+
+    return tkn;
+  } catch (error) {
+    throw raiseUnauthorized(errorMessages.invalid, err.message)
+  }
 }
 
 /**
@@ -96,7 +133,13 @@ async function getRpt (tkn) {
  * @returns {Function} The related validation strategy
  */
 function getValidateFn () {
-  return options.secret ? introspect : options.entitlement ? getRpt : verifySignedJwt
+  return options.secret
+    ? introspect
+    : options.entitlement
+      ? getRpt
+      : options.multiRealm
+        ? verifyDynamicRealmSignedJwt
+        : verifySignedJwt
 }
 
 /**

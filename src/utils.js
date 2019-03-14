@@ -59,7 +59,12 @@ const scheme = joi.object({
       .description('The path to the access token in the response its body as dot notation')
       .example('foo.bar')
   }).unknown(false)
-    .description('The configuration of an optional api key strategy interaction with another service')
+    .description('The configuration of an optional api key strategy interaction with another service'),
+  multiRealm: joi.object({
+    baseUrl: joi.string().required()
+      .description('The base Keycloak url to authenticate against')
+      .example('https://auth.keycloak.com')
+  })
 })
   .without('entitlement', ['secret', 'publicKey'])
   .without('secret', ['entitlement', 'publicKey'])
