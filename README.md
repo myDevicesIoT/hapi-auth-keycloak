@@ -169,6 +169,13 @@ Optional. Default: `undefined`.
   - `request {Object}` – The detailed request options for [`got`][got].<br/>
   Optional. Default: `{}`
 
+- `multiRealm {Object}` - The options object enabling multi realm authentication<br/>
+Optional. Default: `undefined`.
+
+  - `baseUrl {string}` - The base Keycloak url.<br/>
+  Example: `https://auth.keycloak.com`<br/>
+  Required.
+
 #### `await server.kjwt.validate(field {string})`
 - `field {string}` — The `Bearer` field, including the scheme (`bearer`) itself.<br/>
 Example: `bearer 12345.abcde.67890`.<br/>
