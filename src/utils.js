@@ -32,7 +32,9 @@ const scheme = joi.object({
     .description('The minimum time between JWKS requests in seconds')
     .example(15),
   cache: joi.alternatives().try(joi.object({
-    segment: joi.string().default('keycloakJwt')
+    cache: joi.string(),
+    segment: joi.string().default('keycloakJwt'),
+    expiresIn: joi.number()
   }), joi.boolean()).default(false)
     .description('The configuration of the hapi.js cache powered by catbox')
     .example('true'),
