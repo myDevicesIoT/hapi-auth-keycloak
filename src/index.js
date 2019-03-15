@@ -49,14 +49,17 @@ async function verifySignedJwt (tkn) {
 async function verifyDynamicRealmSignedJwt (tkn) {
   try {
     const kcTkn = new KeycloakToken(tkn, options.clientId)
-    const { multiRealm: { baseUrl }, cache } = options
+    const { multiRealm: { baseUrl }, cache: cacheOpts } = options
     const { iss } = kcTkn.content
     const realm = iss.substring(iss.lastIndexOf('/') + 1, iss.length)
 
     let key = await cache.get(store, realm)
     if (!key) {
       key = await publicKey.getRealmPublicKey(baseUrl, realm)
-      const expiresIn = cache && cache.expiresIn ? cache.expiresIn : 1 * 60 * 1000
+      const expiresIn =
+        cacheOpts && cacheOpts.expiresIn
+          ? cacheOpts.expiresIn
+          : 1 * 60 * 1000
       await cache.set(store, realm, key, expiresIn)
     }
     const manage = new GrantManager(
@@ -65,7 +68,7 @@ async function verifyDynamicRealmSignedJwt (tkn) {
         { publicKey: key, realmUrl: `${baseUrl}/auth/realms/${realm}` }
       )
     )
-    await manage.validateToken(tkn, 'Bearer')
+    await manage.validateToken(kcTkn, "Bearer");
 
     return tkn
   } catch (err) {
