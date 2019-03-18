@@ -68,7 +68,7 @@ async function verifyDynamicRealmSignedJwt (tkn) {
         { publicKey: key, realmUrl: `${baseUrl}/auth/realms/${realm}` }
       )
     )
-    await manage.validateToken(kcTkn, "Bearer");
+    await manage.validateToken(kcTkn, 'Bearer')
 
     return tkn
   } catch (err) {
