@@ -63,9 +63,12 @@ const scheme = joi.object({
   }).unknown(false)
     .description('The configuration of an optional api key strategy interaction with another service'),
   multiRealm: joi.object({
-    baseUrl: joi.string().required()
-      .description('The base Keycloak url to authenticate against')
-      .example('https://auth.keycloak.com')
+    baseUrl: joi.alternatives().try(
+      joi.string()
+        .description('The base Keycloak url to authenticate against')
+        .example('https://auth.keycloak.com'),
+      joi.array().items(joi.string().min(1))
+    )
   })
 })
   .without('entitlement', ['secret', 'publicKey'])

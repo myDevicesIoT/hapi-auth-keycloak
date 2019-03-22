@@ -172,7 +172,7 @@ Optional. Default: `undefined`.
 - `multiRealm {Object}` - The options object enabling multi realm authentication<br/>
 Optional. Default: `undefined`.
 
-  - `baseUrl {string}` - The base Keycloak url.<br/>
+  - `baseUrl {string|Array.<string>}` - The base Keycloak url or multiple issuers if `Array.<string>` is provided.<br/>
   Example: `https://auth.keycloak.com`<br/>
   Required.
 

@@ -49,9 +49,16 @@ async function verifySignedJwt (tkn) {
 async function verifyDynamicRealmSignedJwt (tkn) {
   try {
     const kcTkn = new KeycloakToken(tkn, options.clientId)
-    const { multiRealm: { baseUrl }, cache: cacheOpts } = options
+    let { multiRealm: { baseUrl }, cache: cacheOpts } = options
     const { iss } = kcTkn.content
     const realm = iss.substring(iss.lastIndexOf('/') + 1, iss.length)
+
+    baseUrl = Array.isArray(baseUrl)
+      ? baseUrl.find(url => iss.indexOf(url) === 0)
+      : baseUrl
+    if (!baseUrl) {
+      throw new Error('Invalid issuer')
+    }
 
     let key = await cache.get(store, realm)
     if (!key) {
