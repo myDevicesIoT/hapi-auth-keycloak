@@ -172,6 +172,10 @@ async function handleKeycloakValidation (tkn, h) {
     const { expiresIn, credentials } = token.getData(info || tkn, options)
     const userData = { credentials }
 
+    if (options.validate) {
+      await options.validate(tkn, credentials)
+    }
+
     await cache.set(store, tkn, userData, expiresIn)
     return h.authenticated(userData)
   } catch (err) {

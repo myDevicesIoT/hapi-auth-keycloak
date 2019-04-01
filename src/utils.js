@@ -69,7 +69,8 @@ const scheme = joi.object({
         .example('https://auth.keycloak.com'),
       joi.array().items(joi.string().min(1))
     )
-  })
+  }),
+  validate: joi.func().description('Additional validation that is performed after token verification')
 })
   .without('entitlement', ['secret', 'publicKey'])
   .without('secret', ['entitlement', 'publicKey'])
