@@ -105,6 +105,8 @@ function getData (tkn, { clientId, userInfo }) {
   if (contentInfo.scope) {
     scope = [...scope, ...contentInfo.scope.split(' ')]
     delete contentInfo.scope
+  } else {
+    delete contentInfo.scope
   }
 
   return {
