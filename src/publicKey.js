@@ -7,14 +7,13 @@ const got = require('got')
  * Gets the public key for a given realm
  * * Only uses the first key provided from realm
  *
- * @param   {String} baseUrl The keycloak base URL
- * @param   {String} realm   Realm to get public key for
+ * @param   {String} url Keycloak realm url
  * @returns {String} Public key
  * @throws  {Error}
  */
-async function getRealmPublicKey (baseUrl, realm) {
+async function getRealmPublicKey (url) {
   try {
-    let certs = await getRealmCerts(baseUrl, realm)
+    let certs = await getRealmCerts(url)
 
     if (!certs.keys || certs.keys.length !== 1) {
       throw new Error('Public key failed')
@@ -38,8 +37,7 @@ async function getRealmPublicKey (baseUrl, realm) {
  *
  * Get the realm certificates for the provided realm
  *
- * @param {String} baseUrl Keycloak base url
- * @param {String} realm   Realm to get certs from
+ * @param {String} url Keycloak realm URL
  * @returns {{
  *   keys: Array.<{
  *     alg: String
@@ -51,12 +49,12 @@ async function getRealmPublicKey (baseUrl, realm) {
  *   }>
  * }} Realm certificates
  */
-async function getRealmCerts (baseUrl, realm) {
-  const url = `${baseUrl}/auth/realms/${realm}/protocol/openid-connect/certs`
+async function getRealmCerts (url) {
+  const certUrl = `${url}/protocol/openid-connect/certs`
 
   let body = {}
   try {
-    ({ body } = await got.get(url))
+    ({ body } = await got.get(certUrl))
     body = JSON.parse(body)
   } catch (err) {
     throw Error(err)

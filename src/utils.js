@@ -62,15 +62,27 @@ const scheme = joi.object({
       .example('foo.bar')
   }).unknown(false)
     .description('The configuration of an optional api key strategy interaction with another service'),
-  multiRealm: joi.object({
-    baseUrl: joi.alternatives().try(
-      joi.string()
-        .description('The base Keycloak url to authenticate against')
-        .example('https://auth.keycloak.com'),
-      joi.array().items(joi.string().min(1))
+  urls: joi
+    .array()
+    .items(joi.string().min(1))
+    .description(
+      'List of valid Keycloak base urls to authenticate multiple issuers'
+    ),
+  multiRealm: joi
+    .boolean()
+    .default(false)
+    .description(
+      'Authenticates token against any realm when issuer is in `urls` list'
+    ),
+  retrievePublicKey: joi
+    .boolean()
+    .default(false)
+    .description('Retrieves public key on validation request'),
+  validate: joi
+    .func()
+    .description(
+      'Additional validation that is performed after token verification'
     )
-  }),
-  validate: joi.func().description('Additional validation that is performed after token verification')
 })
   .without('entitlement', ['secret', 'publicKey'])
   .without('secret', ['entitlement', 'publicKey'])

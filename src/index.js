@@ -46,41 +46,102 @@ async function verifySignedJwt (tkn) {
  * @param {string} tkn The token to be validated
  * @returns {Promise} The error-handled promise
  */
-async function verifyDynamicRealmSignedJwt (tkn) {
+async function verifyMultiIssuerSignedJwt (tkn) {
   try {
     const kcTkn = new KeycloakToken(tkn, options.clientId)
-    let { multiRealm: { baseUrl }, cache: cacheOpts } = options
-    const { iss } = kcTkn.content
-    const realm = iss.substring(iss.lastIndexOf('/') + 1, iss.length)
-
-    baseUrl = Array.isArray(baseUrl)
-      ? baseUrl.find(url => iss.indexOf(url) === 0)
-      : baseUrl
-    if (!baseUrl) {
-      throw new Error('Invalid issuer')
-    }
-
-    let key = await cache.get(store, realm)
-    if (!key) {
-      key = await publicKey.getRealmPublicKey(baseUrl, realm)
-      const expiresIn =
-        cacheOpts && cacheOpts.expiresIn
-          ? cacheOpts.expiresIn
-          : 1 * 60 * 1000
-      await cache.set(store, realm, key, expiresIn)
-    }
-    const manage = new GrantManager(
-      Object.assign(
-        options,
-        { publicKey: key, realmUrl: `${baseUrl}/auth/realms/${realm}` }
-      )
-    )
+    const realmUrl = getKeycloakIssuer(kcTkn)
+    const publicKey = await getPublicKey(realmUrl)
+    const manage = new GrantManager({ ...options, publicKey, realmUrl })
     await manage.validateToken(kcTkn, 'Bearer')
 
     return tkn
   } catch (err) {
     throw raiseUnauthorized(errorMessages.invalid, err.message)
   }
+}
+
+/**
+ * @function
+ * @private
+ *
+ * Validate the token live with help of the related
+ * Keycloak server, the client identifier and its secret.
+ * Resolve if the request succeeded and token is valid.
+ *
+ * @param {string} tkn The token to be validated
+ * @returns {Promise} The error-handled promise
+ *
+ * @throws {Error} If token is invalid or request failed
+ */
+async function multiIssuerIntrospect (tkn) {
+  try {
+    const kcTkn = new KeycloakToken(tkn, options.clientId)
+    const realmUrl = getKeycloakIssuer(kcTkn)
+    const manage = new GrantManager({ ...options, realmUrl })
+
+    const isValid = await manage.validateAccessToken(tkn)
+    if (isValid === false) throw Error(errorMessages.invalid)
+
+    return tkn
+  } catch (err) {
+    throw raiseUnauthorized(errorMessages.invalid, err.message)
+  }
+}
+
+/**
+ * @function
+ * @private
+ *
+ * Retrieves the Keycloak issuer from token for multi issuers.
+ *
+ * @param {KeycloakToken} tkn
+ *
+ * @throws {Error} If issuer is not found in token
+ */
+function getKeycloakIssuer (tkn) {
+  const { urls, multiRealm } = options
+  const { iss } = tkn.content
+
+  const baseUrl = multiRealm
+    ? urls.find(url => iss.indexOf(url) === 0)
+    : urls.find(url => iss === url)
+
+  if (!baseUrl) {
+    throw new Error('Invalid issuer')
+  }
+
+  return baseUrl
+}
+
+/**
+ * @function
+ * @private
+ *
+ * Retrieves public key and stores in cache.
+ *
+ * @param {String} url Keycloak realm URL
+ *
+ * @returns {Promise.<String>}
+ */
+async function getPublicKey (url) {
+  let { cache: cacheOpts, retrievePublicKey, multiRealm } = options
+
+  if (!retrievePublicKey && !multiRealm) {
+    return options.publicKey
+  }
+
+  let pubKey = await cache.get(store, url)
+  if (!pubKey) {
+    pubKey = await publicKey.getRealmPublicKey(url)
+    const expiresIn =
+      cacheOpts && cacheOpts.expiresIn
+        ? cacheOpts.expiresIn
+        : 1 * 60 * 1000
+
+    await cache.set(store, url, pubKey, expiresIn)
+  }
+
+  return pubKey
 }
 
 /**
@@ -144,13 +205,13 @@ async function getRpt (tkn) {
  * @returns {Function} The related validation strategy
  */
 function getValidateFn () {
-  return options.secret
-    ? introspect
-    : options.entitlement
-      ? getRpt
-      : options.multiRealm
-        ? verifyDynamicRealmSignedJwt
-        : verifySignedJwt
+  if (options.urls) {
+    return options.secret
+      ? multiIssuerIntrospect
+      : verifyMultiIssuerSignedJwt
+  }
+
+  return options.secret ? introspect : options.entitlement ? getRpt : verifySignedJwt
 }
 
 /**
@@ -169,11 +230,11 @@ function getValidateFn () {
 async function handleKeycloakValidation (tkn, h) {
   try {
     const info = await getValidateFn()(tkn)
-    const { expiresIn, credentials } = token.getData(info || tkn, options)
+    let { expiresIn, credentials } = token.getData(info || tkn, options)
     const userData = { credentials }
 
     if (options.validate) {
-      await options.validate(tkn, credentials)
+      credentials = await options.validate(tkn, credentials)
     }
 
     await cache.set(store, tkn, userData, expiresIn)
