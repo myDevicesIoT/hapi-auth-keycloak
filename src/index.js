@@ -110,7 +110,9 @@ function getKeycloakIssuer (tkn) {
     throw new Error('Invalid issuer')
   }
 
-  return baseUrl
+  const realm = iss.substring(iss.lastIndexOf('/') + 1, iss.length)
+
+  return multiRealm ? `${baseUrl}/${realm}` : baseUrl
 }
 
 /**
