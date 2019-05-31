@@ -5,7 +5,7 @@ const apiKey = require('./apiKey')
 const cache = require('./cache')
 const token = require('./token')
 const publicKey = require('./publicKey')
-const { raiseUnauthorized, errorMessages, fakeToolkit, verify } = require('./utils')
+const { raiseUnauthorized, errorMessages, fakeReply, verify } = require('./utils')
 const pkg = require('../package.json')
 
 /**
@@ -240,9 +240,11 @@ async function handleKeycloakValidation (tkn, h) {
     }
 
     await cache.set(store, tkn, userData, expiresIn)
-    return h.authenticated(userData)
+    return h.continue(userData);
+    // return h.authenticated(userData)
   } catch (err) {
-    throw raiseUnauthorized(errorMessages.invalid, err.message)
+    return h(raiseUnauthorized(errorMessages.invalid, err.message));
+    // throw raiseUnauthorized(errorMessages.invalid, err.message)
   }
 }
 
@@ -260,19 +262,22 @@ async function handleKeycloakValidation (tkn, h) {
  * @throws {Boom.unauthorized} If header is missing or has an invalid format
  */
 async function validate (field, h = (data) => data) {
+  const tkn = token.create(field)
+  const reply = fakeReply(h)
+
   if (!field) {
-    throw raiseUnauthorized(errorMessages.missing)
+    return reply(raiseUnauthorized(errorMessages.missing));
+    // throw raiseUnauthorized(errorMessages.missing)
   }
 
-  const tkn = token.create(field)
-  const reply = fakeToolkit(h)
-
   if (!tkn) {
-    throw raiseUnauthorized(errorMessages.invalid)
+    return reply(raiseUnauthorized(errorMessages.invalid));
+    // throw raiseUnauthorized(errorMessages.invalid)
   }
 
   const cached = await cache.get(store, tkn)
-  return cached ? reply.authenticated(cached) : handleKeycloakValidation(tkn, reply)
+  // return cached ? reply.authenticated(cached) : handleKeycloakValidation(tkn, reply)
+  return cached ? reply.continue(cached) : handleKeycloakValidation(tkn, reply)
 }
 
 /**
@@ -306,7 +311,7 @@ function strategy (server) {
  * @param {Hapi.Server} server The created server instance
  * @param {Object} opts The plugin related options
  */
-function register (server, opts) {
+function register (server, opts, next) {
   options = verify(opts)
   manager = new GrantManager(options)
   store = cache.create(server, options.cache)
@@ -314,6 +319,13 @@ function register (server, opts) {
   apiKey.init(server, options)
   server.auth.scheme('keycloak-jwt', strategy)
   server.decorate('server', 'kjwt', { validate })
+
+  return next();
 }
 
-module.exports = { register, pkg }
+module.exports = register;
+module.exports.attributes = {
+  pkg
+};
+
+// module.exports = { register, pkg }

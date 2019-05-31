@@ -181,10 +181,31 @@ function fakeToolkit (h) {
   return h
 }
 
+/** Hapi16 */
+
+/**
+ * @function
+ * @public
+ *
+ * Fake `Hapi` reply interface to provide an
+ * error-first but error-less `continue` method.
+ *
+ * @param {Function} reply
+ * @returns {Function} The decorated function
+ */
+function fakeReply (reply) {
+  if (!reply.continue) {
+    reply.continue = reply.bind(undefined, null)
+  }
+
+  return reply
+}
+
 module.exports = {
   isJwk,
   raiseUnauthorized,
   errorMessages,
   fakeToolkit,
+  fakeReply,
   verify
 }
