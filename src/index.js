@@ -240,10 +240,10 @@ async function handleKeycloakValidation (tkn, h) {
     }
 
     await cache.set(store, tkn, userData, expiresIn)
-    return h.continue(userData);
+    return h.continue(userData)
     // return h.authenticated(userData)
   } catch (err) {
-    return h(raiseUnauthorized(errorMessages.invalid, err.message));
+    return h(raiseUnauthorized(errorMessages.invalid, err.message))
     // throw raiseUnauthorized(errorMessages.invalid, err.message)
   }
 }
@@ -266,12 +266,12 @@ async function validate (field, h = (data) => data) {
   const reply = fakeReply(h)
 
   if (!field) {
-    return reply(raiseUnauthorized(errorMessages.missing));
+    return reply(raiseUnauthorized(errorMessages.missing))
     // throw raiseUnauthorized(errorMessages.missing)
   }
 
   if (!tkn) {
-    return reply(raiseUnauthorized(errorMessages.invalid));
+    return reply(raiseUnauthorized(errorMessages.invalid))
     // throw raiseUnauthorized(errorMessages.invalid)
   }
 
@@ -320,12 +320,12 @@ function register (server, opts, next) {
   server.auth.scheme('keycloak-jwt', strategy)
   server.decorate('server', 'kjwt', { validate })
 
-  return next();
+  return next()
 }
 
-module.exports = register;
+module.exports = register
 module.exports.attributes = {
   pkg
-};
+}
 
 // module.exports = { register, pkg }
