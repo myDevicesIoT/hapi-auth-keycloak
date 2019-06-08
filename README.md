@@ -177,6 +177,8 @@ Optional. Default: `undefined`.
 
 - `validate (function)` - A custom validation function that is executed after Keycloak verification.<br/>
 
+- `retrieveSecret (function)` - A custom function that is executed to retrieve Keycloak secret.<br/>
+
 #### `await server.kjwt.validate(field {string})`
 - `field {string}` — The `Bearer` field, including the scheme (`bearer`) itself.<br/>
 Example: `bearer 12345.abcde.67890`.<br/>

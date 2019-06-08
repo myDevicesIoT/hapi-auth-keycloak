@@ -82,7 +82,10 @@ const scheme = joi.object({
     .func()
     .description(
       'Additional validation that is performed after token verification'
-    )
+    ),
+  retrieveSecret: joi
+    .func()
+    .description('Custom function that retrieves a secret')
 })
   .without('entitlement', ['secret', 'publicKey'])
   .without('secret', ['entitlement', 'publicKey'])

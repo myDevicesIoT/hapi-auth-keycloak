@@ -77,7 +77,13 @@ async function multiIssuerIntrospect (tkn) {
   try {
     const kcTkn = new KeycloakToken(tkn, options.clientId)
     const realmUrl = getKeycloakIssuer(kcTkn)
-    const manage = new GrantManager({ ...options, realmUrl })
+
+    const realm = realmUrl.substring(realmUrl.lastIndexOf('/') + 1, realmUrl.length)
+    const { azp } = kcTkn.content
+    const clientSecret = await options.retrieveSecret(realm, azp)
+    kcTkn.clientId = azp
+
+    const manage = new GrantManager({ ...options, realmUrl, clientSecret })
 
     const isValid = await manage.validateAccessToken(tkn)
     if (isValid === false) throw Error(errorMessages.invalid)
@@ -208,7 +214,7 @@ async function getRpt (tkn) {
  */
 function getValidateFn () {
   if (options.urls) {
-    return options.secret
+    return options.retrieveSecret
       ? multiIssuerIntrospect
       : verifyMultiIssuerSignedJwt
   }
