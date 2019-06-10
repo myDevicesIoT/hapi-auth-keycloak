@@ -79,11 +79,10 @@ async function multiIssuerIntrospect (tkn) {
     const realmUrl = getKeycloakIssuer(kcTkn)
 
     const realm = realmUrl.substring(realmUrl.lastIndexOf('/') + 1, realmUrl.length)
-    const { azp } = kcTkn.content
-    const clientSecret = await options.retrieveSecret(realm, azp)
-    kcTkn.clientId = azp
+    const { azp: clientId } = kcTkn.content
+    const secret = await options.retrieveSecret(realm, clientId)
 
-    const manage = new GrantManager({ ...options, realmUrl, clientSecret })
+    const manage = new GrantManager({ ...options, realmUrl, secret, clientId, public: true })
 
     const isValid = await manage.validateAccessToken(tkn)
     if (isValid === false) throw Error(errorMessages.invalid)
