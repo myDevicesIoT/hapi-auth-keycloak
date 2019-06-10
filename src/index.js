@@ -277,7 +277,7 @@ async function validate (field, h = (data) => data) {
   }
 
   const cached = await cache.get(store, tkn)
-  return cached ? reply.authenticated(cached) : handleKeycloakValidation(tkn, reply)
+  return cached && !(options.secret || options.retrieveSecret) ? reply.authenticated(cached) : handleKeycloakValidation(tkn, reply)
 }
 
 /**
