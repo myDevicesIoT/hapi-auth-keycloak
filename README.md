@@ -171,7 +171,7 @@ Optional. Default: `undefined`.
 
 - `urls (Array.<string>)` - List of valid Keycloak domains that issue tokens in following format: `https://localhost:8080/auth/realms/testme` or `https://localhost:8080/auth/realms` (when using multi realm).<br/>
 
-- `multiRealm (boolean)` - Whether to authenticate against.<br/>
+- `multiRealm (boolean)` - Whether to authenticate against multiple realms.<br/>
 
 - `retrievePublicKey (boolean)` - Retrieves the public key from realm.<br/>
 
