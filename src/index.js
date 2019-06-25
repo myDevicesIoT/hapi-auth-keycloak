@@ -82,6 +82,10 @@ async function multiIssuerIntrospect (tkn) {
     const { azp: clientId } = kcTkn.content
     const secret = await options.retrieveSecret(realm, clientId)
 
+    if (!secret) {
+      return verifyMultiIssuerSignedJwt(tkn)
+    }
+
     const manage = new GrantManager({ ...options, realmUrl, secret, clientId, public: true })
 
     const isValid = await manage.validateAccessToken(tkn)
