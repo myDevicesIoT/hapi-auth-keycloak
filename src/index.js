@@ -17,6 +17,7 @@ const pkg = require('../package.json')
 let options
 let manager
 let store
+let lruStore
 
 /**
  * @function
@@ -75,6 +76,15 @@ async function verifyMultiIssuerSignedJwt (tkn) {
  */
 async function multiIssuerIntrospect (tkn) {
   try {
+    let { lruCache: lruCacheOpts } = options
+
+    let cachedTkn = await cache.get(lruStore, tkn)
+    if (cachedTkn && cachedTkn === 'true') {
+      return tkn
+    } else if (cachedTkn) {
+      throw Error(errorMessages.invalid)
+    }
+
     const kcTkn = new KeycloakToken(tkn, options.clientId)
     const realmUrl = getKeycloakIssuer(kcTkn)
 
@@ -89,6 +99,7 @@ async function multiIssuerIntrospect (tkn) {
     const manage = new GrantManager({ ...options, realmUrl, secret, clientId, public: true })
 
     const isValid = await manage.validateAccessToken(tkn)
+    await cache.set(lruStore, tkn, `${!!isValid}`, lruCacheOpts.expiresIn)
     if (isValid === false) throw Error(errorMessages.invalid)
 
     return tkn
@@ -319,6 +330,7 @@ function register (server, opts) {
   options = verify(opts)
   manager = new GrantManager(options)
   store = cache.create(server, options.cache)
+  lruStore = cache.create(server, options.lruCache)
 
   apiKey.init(server, options)
   server.auth.scheme('keycloak-jwt', strategy)
