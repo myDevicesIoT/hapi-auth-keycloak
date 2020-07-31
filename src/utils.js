@@ -32,7 +32,9 @@ const scheme = joi.object({
     .description('The minimum time between JWKS requests in seconds')
     .example(15),
   cache: joi.alternatives().try(joi.object({
-    segment: joi.string().default('keycloakJwt')
+    cache: joi.string(),
+    segment: joi.string().default('keycloakJwt'),
+    expiresIn: joi.number()
   }), joi.boolean()).default(false)
     .description('The configuration of the hapi.js cache powered by catbox')
     .example('true'),
@@ -59,7 +61,31 @@ const scheme = joi.object({
       .description('The path to the access token in the response its body as dot notation')
       .example('foo.bar')
   }).unknown(false)
-    .description('The configuration of an optional api key strategy interaction with another service')
+    .description('The configuration of an optional api key strategy interaction with another service'),
+  urls: joi
+    .array()
+    .items(joi.string().min(1))
+    .description(
+      'List of valid Keycloak base urls to authenticate multiple issuers'
+    ),
+  multiRealm: joi
+    .boolean()
+    .default(false)
+    .description(
+      'Authenticates token against any realm when issuer is in `urls` list'
+    ),
+  retrievePublicKey: joi
+    .boolean()
+    .default(false)
+    .description('Retrieves public key on validation request'),
+  validate: joi
+    .func()
+    .description(
+      'Additional validation that is performed after token verification'
+    ),
+  retrieveSecret: joi
+    .func()
+    .description('Custom function that retrieves a secret')
 })
   .without('entitlement', ['secret', 'publicKey'])
   .without('secret', ['entitlement', 'publicKey'])

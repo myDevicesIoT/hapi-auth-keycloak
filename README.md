@@ -169,6 +169,16 @@ Optional. Default: `undefined`.
   - `request {Object}` – The detailed request options for [`got`][got].<br/>
   Optional. Default: `{}`
 
+- `urls (Array.<string>)` - List of valid Keycloak domains that issue tokens in following format: `https://localhost:8080/auth/realms/testme` or `https://localhost:8080/auth/realms` (when using multi realm).<br/>
+
+- `multiRealm (boolean)` - Whether to authenticate against multiple realms.<br/>
+
+- `retrievePublicKey (boolean)` - Retrieves the public key from realm.<br/>
+
+- `validate (function)` - A custom validation function that is executed after Keycloak verification.<br/>
+
+- `retrieveSecret (function)` - A custom function that is executed to retrieve Keycloak secret.<br/>
+
 #### `await server.kjwt.validate(field {string})`
 - `field {string}` — The `Bearer` field, including the scheme (`bearer`) itself.<br/>
 Example: `bearer 12345.abcde.67890`.<br/>

@@ -100,11 +100,18 @@ function getUserInfo (content, fields = []) {
  */
 function getData (tkn, { clientId, userInfo }) {
   const content = jwt.decode(tkn)
-  const scope = getRoles(clientId, content)
+  const contentInfo = getUserInfo(content, userInfo)
+  let scope = getRoles(clientId, content)
+  if (contentInfo.scope) {
+    scope = [...scope, ...contentInfo.scope.split(' ')]
+    delete contentInfo.scope
+  } else {
+    delete contentInfo.scope
+  }
 
   return {
     expiresIn: getExpiration(content),
-    credentials: Object.assign({ scope }, getUserInfo(content, userInfo))
+    credentials: Object.assign({ scope }, contentInfo)
   }
 }
 
