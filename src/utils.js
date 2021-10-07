@@ -2,6 +2,12 @@ const boom = require('boom')
 const joi = require('joi')
 const jwkToPem = require('jwk-to-pem')
 
+const cacheObject = joi.object({
+  cache: joi.string(),
+  segment: joi.string().default('keycloakJwt'),
+  expiresIn: joi.number()
+})
+
 /**
  * @type Object
  * @private
@@ -31,12 +37,11 @@ const scheme = joi.object({
   minTimeBetweenJwksRequests: joi.number().integer().positive().allow(0).default(0)
     .description('The minimum time between JWKS requests in seconds')
     .example(15),
-  cache: joi.alternatives().try(joi.object({
-    cache: joi.string(),
-    segment: joi.string().default('keycloakJwt'),
-    expiresIn: joi.number()
-  }), joi.boolean()).default(false)
+  cache: joi.alternatives().try(cacheObject, joi.boolean()).default(false)
     .description('The configuration of the hapi.js cache powered by catbox')
+    .example('true'),
+  lruCache: joi.alternatives().try(cacheObject, joi.boolean()).default(false)
+    .description('The configuration of the hapi.js lru cache powered by catbox')
     .example('true'),
   userInfo: joi.array().items(joi.string().min(1))
     .description('List of properties which should be included in the `request.auth.credentials` object')
