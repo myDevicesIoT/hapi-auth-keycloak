@@ -299,7 +299,8 @@ async function validate (field, h = (data) => data) {
 function strategy (server) {
   return {
     authenticate (request, h) {
-      return validate(request.raw.req.headers.authorization, h)
+      const altAuth = request.query.token ? 'Bearer ' + request.query.token : null;
+      return validate(request.raw.req.headers.authorization || altAuth, h)
     }
   }
 }
