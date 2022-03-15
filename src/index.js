@@ -320,8 +320,7 @@ function strategy (server) {
   return {
     authenticate (request, h) {
       const altAuth = request.query.token ? 'Bearer ' + request.query.token : null
-      const sharing = request.query.sharing ? 'Sharing: ' + request.query.sharing : null
-      return validate(request.raw.req.headers.authorization || altAuth, sharing, h)
+      return validate(request.raw.req.headers.authorization || altAuth, request.query.sharing, h)
     }
   }
 }
