@@ -284,13 +284,13 @@ async function validate (field, h = (data) => data) {
     throw raiseUnauthorized(errorMessages.missing)
   }
 
-  if(field && field.startsWith('Sharing')){
+  if (field && field.startsWith('Sharing')) {
     return h.authenticated({
       credentials: {
         isValid: true,
         sharing: field.replace('Sharing: ', '')
       }
-    });
+    })
   }
   const tkn = token.create(field)
   const reply = fakeToolkit(h)
@@ -318,8 +318,8 @@ async function validate (field, h = (data) => data) {
 function strategy (server) {
   return {
     authenticate (request, h) {
-      const altAuth = request.query.token ? 'Bearer ' + request.query.token : null;
-      const sharing = request.query.sharing ? 'Sharing: ' + request.query.sharing : null;
+      const altAuth = request.query.token ? 'Bearer ' + request.query.token : null
+      const sharing = request.query.sharing ? 'Sharing: ' + request.query.sharing : null
       return validate(request.raw.req.headers.authorization || altAuth || sharing, h)
     }
   }
