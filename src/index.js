@@ -281,7 +281,7 @@ async function handleKeycloakValidation (tkn, h) {
  * @throws {Boom.unauthorized} If header is missing or has an invalid format
  */
 async function validate (field, sharing, h = (data) => data) {
-  if (!field) {
+  if (!field && !sharing) {
     throw raiseUnauthorized(errorMessages.missing)
   }
 
