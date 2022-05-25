@@ -275,15 +275,24 @@ async function handleKeycloakValidation (tkn, h) {
  * handle validation with help of Keycloak.
  *
  * @param {string} field The authorization field, e.g. the value of `Authorization`
+ * @param {string} sharing The has for sharing resource
  * @param {Object} h The reply toolkit
  *
  * @throws {Boom.unauthorized} If header is missing or has an invalid format
  */
-async function validate (field, h = (data) => data) {
-  if (!field) {
+async function validate (field, sharing, h = (data) => data) {
+  if (!field && !sharing) {
     throw raiseUnauthorized(errorMessages.missing)
   }
 
+  if (sharing && !field) {
+    return h.authenticated({
+      credentials: {
+        isValid: true,
+        sharing
+      }
+    })
+  }
   const tkn = token.create(field)
   const reply = fakeToolkit(h)
 
@@ -310,8 +319,8 @@ async function validate (field, h = (data) => data) {
 function strategy (server) {
   return {
     authenticate (request, h) {
-      const altAuth = request.query.token ? 'Bearer ' + request.query.token : null;
-      return validate(request.raw.req.headers.authorization || altAuth, h)
+      const altAuth = request.query.token ? 'Bearer ' + request.query.token : null
+      return validate(request.raw.req.headers.authorization || altAuth, request.query.sharing, h)
     }
   }
 }
