@@ -285,7 +285,7 @@ async function validate (field, sharing, h = (data) => data) {
     throw raiseUnauthorized(errorMessages.missing)
   }
 
-  if (sharing && !field) {
+  if (sharing) {
     return h.authenticated({
       credentials: {
         isValid: true,
